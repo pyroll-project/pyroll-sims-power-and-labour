@@ -1,0 +1,43 @@
+%! Author = maxwe
+%! Date = 10.03.22
+
+% Preamble
+\documentclass[11pt]{PyRollDocs}
+
+% Document
+\begin{document}
+
+    \title{The ... PyRoll Plugin}
+    \author{Your Name}
+    \date{\today}
+
+    \maketitle
+
+    Document your plugin here.
+
+
+    \section{Model approach}\label{sec:model-approach}
+
+    Some model equations:
+
+    \[
+        a^2 + b^2 = c^2
+    \]
+
+
+    \section{Usage instructions}\label{sec:usage-instructions}
+
+    Shell command code blocks:
+
+    \begin{shell}[gobble=8] % remove additional leading spaces (1 tab = 4 spaces => 8 spaces = 2 tabs)
+        pyroll input-py solve report
+    \end{shell}
+
+    Python code blocks:
+
+    \begin{python}[gobble=8] % remove additional leading spaces (1 tab = 4 spaces => 8 spaces = 2 tabs)
+        def python_function():
+        return None
+    \end{python}
+
+\end{document}
