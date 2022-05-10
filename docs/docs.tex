@@ -1,43 +1,114 @@
-%! Author = maxwe
-%! Date = 10.03.22
+%! Author = Christoph Renzing
+%! Date = 10.05.2022
 
 % Preamble
 \documentclass[11pt]{PyRollDocs}
+\usepackage{mathtools}
+\addbibresource{refs.bib}
 
 % Document
 \begin{document}
 
-    \title{The ... PyRoll Plugin}
-    \author{Your Name}
+    \title{The Sims Power and Labour PyRoll Plugin}
+    \author{Christoph Renzing}
     \date{\today}
 
     \maketitle
 
-    Document your plugin here.
+    This plugin provides the roll force and roll torque model developed by R.~B.~Sims \textcite{Sims1954}.
+    The basic equations are derived from classic strip theory with suitable simplifications suitable for hot rolling (e.g. static friction, neglect of elastic material behaviour).
+    Usage of the equations for groove rolling is only valid, when using a equivalent rectangle approach.
+    Heights used for calculation and therefore equivalent values for a equivalent flat pass.
+    In contrary to the original work by Sims, the current implementation doesn't integrate a flattened roll radius but calculates the roll force and torque using the nominal roll radius $R$.
+    Furthermore, the used variable $h$ is the height of the equivalent flat workpiece, $k_{f,m}$ represents the mean flow stress of the material and $\epsilon$ the reduction of the equivalent pass in height direction.
+    The indices 0 and 1 denote the incoming and exiting profile.
 
 
     \section{Model approach}\label{sec:model-approach}
 
-    Some model equations:
+    To calculate the roll force in hot rolling, the following equation was developed:
 
-    \[
-        a^2 + b^2 = c^2
-    \]
+    \begin{equation}
+        F_{Roll} = k_{f, m} \sqrt{R \Delta h} Q_{Force}(\frac{R}{h_1}, \epsilon_h)
+        \label{eq:sims-force-simple}
+    \end{equation}
+
+    The function $Q_{Force}$ is a which combines the influence of the reduction of the pass.
+    This function depends on the height of the workpiece at the neutral line $h_{n}$.
+    Calculation of the neutral line angle is done through equation~\ref{eq:neutral-line-angle} and the height of the workpiece dependent on the roll angle $\alpha$ is express with equation ~\ref{eq:roll-gap-height}.
+
+    \begin{subequations}
+        \begin{equation}
+            \begin{multlined}
+                Q_{Force} = \frac{\pi}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \arctan\left( \sqrt{\frac{\epsilon}{1 - \epsilon}} \right) - \frac{\pi}{4} - \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R}{h_1}} \log\left( \frac{h_ {n}}{h_1} \right) + \\
+                \frac{1}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R}{h_1}} \log \left( \frac{1}{1 - \epsilon} \right)
+            \end{multlined}
+            \label{eq:sims-force-function}
+        \end{equation}
+        \begin{equation}
+            \alpha_{n} = \frac{\tan \left( \frac{1}{8} (4 \arctan (\frac{\epsilon}{1 - \epsilon}) + \frac{\pi \log (1 - \epsilon)}{\sqrt{\frac{R}{h_1}}} )\right)}{\sqrt{\frac{R}{h_1}}}
+            \label{eq:neutral-line-angle}\\
+        \end{equation}
+        \begin{equation}
+            h(\alpha) = h_1 + 2 R ( 1 - \cos(\alpha))
+            \label{eq:roll-gap-height}
+        \end{equation}
+        \begin{equation}
+            k_{f,m} = \frac{k_{f, 0} + 2 k_{f, 1}}{3}
+            \label{eq:mean-flow-stress}
+        \end{equation}
+    \end{subequations}
+
+    As for the roll torque $M_{roll}$, Sims developed a similar equation.
+
+    \begin{equation}
+        M_{roll} = 2 R^2 k_{f, m} Q_{Torque}
+        \label{eq:sims-torque}
+    \end{equation}
+
+    The function $Q_{Torque}$ depends on the entry angle of the equivalent flat pass $\alpha_0$ which is calculated from equation~\ref{eq:entry-angle}.
+    Furthermore, $L_d$ is the contact length of the equivalent flat pass.
+
+    \begin{subequations}
+        \begin{equation}
+            Q_{Torque} = \frac{a_0}{2} - \alpha_n
+            \label{eq:sims-torque-function}\\
+        \end{equation}
+        \begin{equation}
+            \alpha_0 =  \arcsin \left( \frac{L_d}{R} \right)
+            \label{eq:entry-angle}
+        \end{equation}
+    \end{subequations}
 
 
     \section{Usage instructions}\label{sec:usage-instructions}
 
-    Shell command code blocks:
+    The plugin can be loaded under the name \texttt{pyroll\_sims\_power\_and\_labour}.
 
-    \begin{shell}[gobble=8] % remove additional leading spaces (1 tab = 4 spaces => 8 spaces = 2 tabs)
-        pyroll input-py solve report
-    \end{shell}
+    An implementation of the \lstinline{roll_force} and \lstinline{roll_tourque} hook on \lstinline{RollPass} and \lstinline{Roll} is provided,
+    calculating the roll force and torque using the equivalent rectangle approach.
 
-    Python code blocks:
+    Several additional hooks on \lstinline{RollPass} are defined, which are used in spread calculation, as listed in \autoref{tab:hookspecs}.
+    Base implementations of them are provided, so it should work out of the box.
+    For \lstinline{sims_force_function} and \lstinline{sims_torque_function} the equations~\ref{eq:sims-force-function} and~\ref{eq:sims-torque} are implemented.
+    Provide your own hook implementations or set attributes on the \lstinline{RollPass} instances to alter the spreading behavior.
 
-    \begin{python}[gobble=8] % remove additional leading spaces (1 tab = 4 spaces => 8 spaces = 2 tabs)
-        def python_function():
-        return None
-    \end{python}
+    \begin{table}
+        \centering
+        \caption{Hooks specified by this plugin.}
+        \label{tab:hookspecs}
+        \begin{tabular}{ll}
+            \toprule
+            Hook name                                 & Meaning                                     \\
+            \midrule
+            \texttt{equivalent\_height\_change}       & Equivalent height change $\Delta h$         \\
+            \texttt{equivalent\_reduction}            & Equivalent reduction $\epsilon$             \\
+            \texttt{equivalent\_neutral\_line\_angle} & Equivalent angle of neutral line $\alpha_0$ \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+
+    \printbibliography
+
 
 \end{document}

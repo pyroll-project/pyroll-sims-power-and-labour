@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.optimize as opt
 from pyroll import RollPass
 
 
@@ -19,14 +18,6 @@ def equivalent_neutral_line_angle(roll_pass: RollPass):
             4 * np.arctan(roll_pass.equivalent_reduction / (1 - roll_pass.equivalent_reduction)) + (np.pi * np.log(1 - roll_pass.equivalent_reduction)) / (
         np.sqrt(roll_pass.roll.nominal_radius / roll_pass.out_profile.equivalent_rectangle.height)))) / np.sqrt(
         roll_pass.roll.nominal_radius / roll_pass.out_profile.equivalent_rectangle.height)
-
-
-@RollPass.hookimpl
-def equivalent_entry_angle(roll_pass: RollPass):
-    def roll_gap_height(roll_angle):
-        return roll_pass.out_profile.equivalent_rectangle.height + 2 * roll_pass.roll.nominal_radius * (1 - np.cos(roll_angle))
-
-    return
 
 
 @RollPass.hookimpl
