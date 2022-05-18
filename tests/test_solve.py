@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-import pytest
-
 from pyroll import solve
 from pyroll.ui.reporter import Reporter
 
@@ -11,9 +9,8 @@ THIS_DIR = Path(__file__).parent
 
 def test_solve(tmp_path: Path, caplog):
     import pyroll.ui.cli.res.input_trio as input_py
-    import pyroll_sims_power_and_labour
 
-    caplog.set_level(logging.DEBUG, logger="pyroll_sims_power_and_labour")
+    caplog.set_level(logging.DEBUG, logger="sims_power_and_labour")
 
     sequence = input_py.sequence
 
