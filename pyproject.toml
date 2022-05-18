@@ -11,7 +11,7 @@ homepage = "https://pyroll-project.github.io/"
 repository = "https://github.com/pyroll-project/pyroll-sims-power-and-labour"
 documentation = "https://pyroll-project.github.io/modules/pyroll-sims-power-and-labour/docs/"
 packages = [
-    { include = "pyroll/sims-power-and-labour" }
+    { include = "pyroll/sims_power_and_labour" }
 ]
 
 [tool.poetry.dependencies]
