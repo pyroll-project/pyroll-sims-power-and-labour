@@ -29,7 +29,7 @@ def equivalent_neutral_line_angle(roll_pass: RollPass):
     log.info(f"Calculated a neutral line angle of: {np.rad2deg(neutral_line):.2f}")
     log.debug(f"Calculated a roll angle at half contact length of: {np.rad2deg(simple_neutral_line):.2f}")
 
-    return simple_neutral_line
+    return neutral_line
 
 
 @RollPass.hookimpl
