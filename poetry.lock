@@ -257,7 +257,7 @@ Shapely = "^1.8.1"
 type = "git"
 url = "https://github.com/pyroll-project/pyroll-core"
 reference = "main"
-resolved_reference = "a5b4689d5d8b08e37bd9e35b79d54a1aa097d42c"
+resolved_reference = "e7b5ab514f79cbba70cd82213479a25c8202124f"
 
 [[package]]
 name = "pyroll-hitchcock-roll-flattening"
