@@ -19,7 +19,7 @@
     The basic equations are derived from classic strip theory with suitable simplifications suitable for hot rolling (e.g. static friction, neglect of elastic material behaviour).
     Usage of the equations for groove rolling is only valid, when using a equivalent rectangle approach.
     Heights used for calculation and therefore equivalent values for a equivalent flat pass.
-    In contrary to the original work by Sims, the current implementation doesn't integrate a flattened roll radius but calculates the roll force and torque using the nominal roll radius $R$.
+    The work by Sims, implements a flattened roll radius $R_1$ which is to be calculated through suitable models.
     Furthermore, the used variable $h$ is the height of the equivalent flat workpiece, $k_{f,m}$ represents the mean flow stress of the material and $\epsilon$ the reduction of the equivalent pass in height direction.
     The indices 0 and 1 denote the incoming and exiting profile.
 
@@ -40,13 +40,13 @@
     \begin{subequations}
         \begin{equation}
             \begin{multlined}
-                Q_{Force} = \frac{\pi}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \arctan\left( \sqrt{\frac{\epsilon}{1 - \epsilon}} \right) - \frac{\pi}{4} - \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R}{h_1}} \log\left( \frac{h_ {n}}{h_1} \right) + \\
-                \frac{1}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R}{h_1}} \log \left( \frac{1}{1 - \epsilon} \right)
+                Q_{Force} = \frac{\pi}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \arctan\left( \sqrt{\frac{\epsilon}{1 - \epsilon}} \right) - \frac{\pi}{4} - \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R_1}{h_1}} \log\left( \frac{h_ {n}}{h_1} \right) + \\
+                \frac{1}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R_1}{h_1}} \log \left( \frac{1}{1 - \epsilon} \right)
             \end{multlined}
             \label{eq:sims-force-function}
         \end{equation}
         \begin{equation}
-            \alpha_{n} = \frac{\tan \left( \frac{1}{8} (4 \arctan (\frac{\epsilon}{1 - \epsilon}) + \frac{\pi \log (1 - \epsilon)}{\sqrt{\frac{R}{h_1}}} )\right)}{\sqrt{\frac{R}{h_1}}}
+            \alpha_{n} = \frac{\tan \left( \frac{1}{8} (4 \arctan (\frac{\epsilon}{1 - \epsilon}) + \frac{\pi \log (1 - \epsilon)}{\sqrt{\frac{R_1}{h_1}}} )\right)}{\sqrt{\frac{R_1}{h_1}}}
             \label{eq:neutral-line-angle}\\
         \end{equation}
         \begin{equation}
