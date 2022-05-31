@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import scipy.optimize as opt
 from pyroll.core import RollPass
 
 log = logging.getLogger(__name__)
@@ -16,18 +17,48 @@ def equivalent_reduction(roll_pass: RollPass):
 
 
 @RollPass.hookimpl
-def equivalent_neutral_line_angle(roll_pass: RollPass):
+def equivalent_entry_angle(roll_pass: RollPass):
+    entry_angle = np.arcsin(roll_pass.roll.contact_length / roll_pass.roll.min_radius)
+    log.info(f"Calculated an entry angle of: {np.rad2deg(entry_angle):.2f}")
+
+    return entry_angle
+
+
+@RollPass.hookimpl
+def sims_neutral_line_angle(roll_pass: RollPass):
     initial_height = roll_pass.in_profile.equivalent_rectangle.height
     final_height = roll_pass.out_profile.equivalent_rectangle.height
 
-    sims_neutral_line = np.sqrt(final_height / roll_pass.roll.flattened_radius) * np.tan(1 / 2 * (
+    def neutral_line_fun(neutral_line_angle: float):
+        return (2 * np.sqrt(roll_pass.roll.flattened_radius / final_height) * np.arctan(
+            np.sqrt(roll_pass.roll.flattened_radius / final_height)) * neutral_line_angle - np.sqrt(roll_pass.roll.flattened_radius / final_height) * np.arctan(
+            np.sqrt(roll_pass.roll.flattened_radius / final_height)) * roll_pass.equivalent_entry_angle) - np.pi / 4 * np.log(final_height / initial_height)
+
+    return opt.root(neutral_line_fun, roll_pass.roll.contact_length / 2)
+
+
+@RollPass.hookimpl
+def sims_simplified_neutral_line_angle(roll_pass: RollPass):
+    initial_height = roll_pass.in_profile.equivalent_rectangle.height
+    final_height = roll_pass.out_profile.equivalent_rectangle.height
+
+    return np.sqrt(final_height / roll_pass.roll.flattened_radius) * np.tan(1 / 2 * (
             np.arctan(np.sqrt(initial_height / final_height - 1)) + np.sqrt(final_height / roll_pass.roll.flattened_radius) * np.pi / 4 * np.log(
         final_height / initial_height)
     ))
 
-    log.info(f"Calculated a neutral line angle of {np.rad2deg(sims_neutral_line):.2f} using Sims model")
 
-    return sims_neutral_line
+@RollPass.hookimpl
+def equivalent_neutral_line_angle(roll_pass: RollPass):
+    if roll_pass.sims_neutral_line_angle.success is True:
+        neutral_line = roll_pass.sims_neutral_line_angle.x[0]
+        log.info(f"Calculated a neutral line angle of {np.rad2deg(neutral_line):.2f} using Sims original model")
+    else:
+        neutral_line = roll_pass.sims_simplified_neutral_line_angle
+        log.warning("Calculation of neutral line angle using Sims original model failed due to" + roll_pass.sims_neutral_line_angle.message)
+        log.info(f"Calculated a neutral line angle of {np.rad2deg(neutral_line):.2f} using Sims simplified model")
+
+    return neutral_line
 
 
 @RollPass.hookimpl
@@ -57,17 +88,16 @@ def roll_force(roll_pass: RollPass):
 
 @RollPass.hookimpl
 def sims_torque_function(roll_pass: RollPass):
-    entry_angle = np.arcsin(roll_pass.roll.contact_length / roll_pass.roll.min_radius)
-    log.info(f"Calculated an entry angle of: {np.rad2deg(entry_angle):.2f}")
-
-    return entry_angle / 2 - roll_pass.equivalent_neutral_line_angle
+    return roll_pass.equivalent_entry_angle / 2 - roll_pass.equivalent_neutral_line_angle
 
 
 @RollPass.Roll.hookimpl
 def roll_torque(roll_pass: RollPass, roll: RollPass.Roll):
     mean_flow_stress = (roll_pass.in_profile.flow_stress + 2 * roll_pass.out_profile.flow_stress) / 3
+    mean_width = (roll_pass.in_profile.equivalent_rectangle.width + 2 * roll_pass.out_profile.equivalent_rectangle.width) / 3
+
     log.info(f"Calculated a mean flow stress of: {mean_flow_stress / 1e6 :.2f} MPa")
-    mean_width = (roll_pass.in_profile.equivalent_rectangle.width + roll_pass.out_profile.equivalent_rectangle.width) / 2
+
     torque_per_width = 2 * roll.working_radius * roll.flattened_roll_radius * mean_flow_stress * roll_pass.sims_torque_function
 
     return torque_per_width * mean_width
