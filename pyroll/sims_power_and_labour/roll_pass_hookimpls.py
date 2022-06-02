@@ -80,7 +80,8 @@ def sims_force_function(roll_pass: RollPass):
 @RollPass.hookimpl
 def roll_force(roll_pass: RollPass):
     mean_flow_stress = (roll_pass.in_profile.flow_stress + 2 * roll_pass.out_profile.flow_stress) / 3
-    mean_width = (roll_pass.in_profile.equivalent_rectangle.width + roll_pass.out_profile.equivalent_rectangle.width) / 2
+    mean_width = (roll_pass.in_profile.equivalent_rectangle.width + 2 * roll_pass.out_profile.equivalent_rectangle.width) / 3
+
     roll_force_per_width = mean_flow_stress * np.sqrt(roll_pass.roll.flattened_roll_radius * roll_pass.equivalent_height_change) * roll_pass.sims_force_function
 
     return roll_force_per_width * mean_width
@@ -95,8 +96,6 @@ def sims_torque_function(roll_pass: RollPass):
 def roll_torque(roll_pass: RollPass, roll: RollPass.Roll):
     mean_flow_stress = (roll_pass.in_profile.flow_stress + 2 * roll_pass.out_profile.flow_stress) / 3
     mean_width = (roll_pass.in_profile.equivalent_rectangle.width + 2 * roll_pass.out_profile.equivalent_rectangle.width) / 3
-
-    log.info(f"Calculated a mean flow stress of: {mean_flow_stress / 1e6 :.2f} MPa")
 
     torque_per_width = 2 * roll.working_radius * roll.flattened_roll_radius * mean_flow_stress * roll_pass.sims_torque_function
 
