@@ -37,6 +37,14 @@ def equivalent_height_at_neutral_line(roll_pass: RollPass):
 
 
 @RollPass.hookspec
+def lever_arm_weber(roll_pass: RollPass):
+    """Lever arm coefficient approximated with a formula given by K. H. Weber."""
+
+
+
+
+
+@RollPass.hookspec
 def sims_force_function(roll_pass: RollPass):
     """Function developed by R.B. Sims for calculation of the roll force."""
 
