@@ -88,7 +88,7 @@ def roll_force(roll_pass: RollPass):
 
 
 @RollPass.hookimpl
-def lever_arm_weber(roll_pass: RollPass):
+def lever_arm_sims(roll_pass: RollPass):
     final_height = roll_pass.out_profile.equivalent_rectangle.height
 
     return 0.78 + 0.017 * roll_pass.roll.flattened_roll_radius / final_height - 0.163 * np.sqrt(roll_pass.roll.flattened_roll_radius / final_height)
@@ -97,12 +97,6 @@ def lever_arm_weber(roll_pass: RollPass):
 @RollPass.hookimpl
 def sims_torque_function(roll_pass: RollPass):
     return roll_pass.equivalent_entry_angle / 2 - roll_pass.equivalent_neutral_line_angle
-
-
-@RollPass.Roll.hookimpl
-def roll_torque_weber(roll_pass: RollPass, roll: RollPass.Roll):
-
-    return 2 * roll_pass.roll_force * roll.contact_length * roll_pass.lever_arm_weber
 
 
 @RollPass.Roll.hookimpl
