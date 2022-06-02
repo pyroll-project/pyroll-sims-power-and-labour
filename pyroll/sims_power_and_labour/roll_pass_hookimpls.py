@@ -91,7 +91,7 @@ def roll_force(roll_pass: RollPass):
 def lever_arm_weber(roll_pass: RollPass):
     final_height = roll_pass.out_profile.equivalent_rectangle.height
 
-    return 0.78 + 0.017 * roll_pass.roll.working_radius / final_height - 0.163 * np.sqrt(roll_pass.roll.working_radius / final_height)
+    return 0.78 + 0.017 * roll_pass.roll.flattened_roll_radius / final_height - 0.163 * np.sqrt(roll_pass.roll.flattened_roll_radius / final_height)
 
 
 @RollPass.hookimpl
