@@ -15,13 +15,15 @@
 
     \maketitle
 
-    This plugin provides the roll force and roll torque model developed by R.~B.~Sims \textcite{Sims1954}.
-    The basic equations are derived from classic strip theory with suitable simplifications suitable for hot rolling (e.g. static friction, neglect of elastic material behaviour).
+    This plugin provides the roll force and roll torque model developed by \textcite{Sims1954}.
+    The basic equations are derived from classic strip theory with suitable simplifications suitable for hot rolling.
+    \textcite{Weber1960, Weber1973} described the method as suitable for calculation of roll force, as for roll torque calculations, the derived method doesn't yield acceptable results.
+    For the presented plugin, the specific roll torque at the upper work roll is calculated using the original model from Sims as well as the adjusted method by Weber.
     Usage of the equations for groove rolling is only valid, when using a equivalent rectangle approach.
     Heights used for calculation and therefore equivalent values for a equivalent flat pass.
-    The work by Sims, implements a flattened roll radius $R_1$ which is to be calculated through suitable models.
-    Furthermore, the used variable $h$ is the height of the equivalent flat workpiece, $k_{f,m}$ represents the mean flow stress of the material and $\epsilon$ the reduction of the equivalent pass in height direction.
-    The indices 0 and 1 denote the incoming and exiting profile.
+    The work by Sims, implements a flattened roll radius $R_1$ which is to be calculated from the nominal radius $R_0$ through suitable models (e.g.~Hitchcock's model \textcite{Hitchcook1935}).
+    Furthermore, the used variable $h$ is the height of the equivalent flat workpiece and $b_m$ it's mean width, $k_{f,m}$ represents the mean flow stress of the material and $\epsilon$ the reduction of the equivalent pass in height direction.
+    The indices 0 and 1 denote the incoming and exiting profile and $L_d$ is the contact length of the pass.
 
 
     \section{Model approach}\label{sec:model-approach}
@@ -29,13 +31,15 @@
     To calculate the roll force in hot rolling, the following equation was developed:
 
     \begin{equation}
-        F_{Roll} = k_{f, m} \sqrt{R \Delta h} Q_{Force}(\frac{R}{h_1}, \epsilon_h)
-        \label{eq:sims-force-simple}
+        F_{Roll} = k_{f, m} \sqrt{R_1 \Delta h} b_m Q_{Force}(\frac{R_1}{h_1}, \epsilon_h)
+        \label{eq:sims-force}
     \end{equation}
 
     The function $Q_{Force}$ is a which combines the influence of the reduction of the pass.
     This function depends on the height of the workpiece at the neutral line $h_{n}$.
-    Calculation of the neutral line angle is done through equation~\ref{eq:neutral-line-angle} and the height of the workpiece dependent on the roll angle $\alpha$ is express with equation ~\ref{eq:roll-gap-height}.
+    Calculation of the neutral line angle $\alpha_n$ numerically using~\eqref{eq:neutral-line} by \textcite{Sims1954}.
+    A fallback implementation is~\eqref{eq:neutral-line-fallback} from Sims.
+    The height of the workpiece dependent on the roll angle $\alpha$ is express with equation ~\ref{eq:roll-gap-height}.
 
     \begin{subequations}
         \begin{equation}
@@ -44,10 +48,6 @@
                 \frac{1}{2} \sqrt{\frac{1 - \epsilon}{\epsilon}} \sqrt{\frac{R_1}{h_1}} \log \left( \frac{1}{1 - \epsilon} \right)
             \end{multlined}
             \label{eq:sims-force-function}
-        \end{equation}
-        \begin{equation}
-            \alpha_{n} = \frac{\tan \left( \frac{1}{8} (4 \arctan (\frac{\epsilon}{1 - \epsilon}) + \frac{\pi \log (1 - \epsilon)}{\sqrt{\frac{R_1}{h_1}}} )\right)}{\sqrt{\frac{R_1}{h_1}}}
-            \label{eq:neutral-line-angle}\\
         \end{equation}
         \begin{equation}
             h(\alpha) = h_1 + 2 R ( 1 - \cos(\alpha))
@@ -62,12 +62,13 @@
     As for the roll torque $M_{roll}$, Sims developed a similar equation.
 
     \begin{equation}
-        M_{roll} = 2 R^2 k_{f, m} Q_{Torque}
+        M_{roll} = 2 R_1 * R_0 k_{f, m} Q_{Torque}(\frac{R_1}{h_1}, \epsilon)
         \label{eq:sims-torque}
     \end{equation}
 
-    The function $Q_{Torque}$ depends on the entry angle of the equivalent flat pass $\alpha_0$ which is calculated from equation~\ref{eq:entry-angle}.
-    Furthermore, $L_d$ is the contact length of the equivalent flat pass.
+    The function $Q_{Torque}$ depends on the entry angle of the equivalent flat pass $\alpha_0$, which is calculated from equation~\ref{eq:entry-angle},
+    using the minimal radius $R_{min}$.
+
 
     \begin{subequations}
         \begin{equation}
@@ -75,8 +76,32 @@
             \label{eq:sims-torque-function}\\
         \end{equation}
         \begin{equation}
-            \alpha_0 =  \arcsin \left( \frac{L_d}{R} \right)
+            \alpha_0 =  \arcsin \left( \frac{L_d}{R_{min}} \right)
             \label{eq:entry-angle}
+        \end{equation}
+        \begin{equation}
+            0 = \left( \sqrt{\frac{R_1}{h_1}} \arctan (\sqrt {\frac{R_1}{h_1}}) \alpha_n - \sqrt {\frac{R_1}{h_1}} \arctan (\sqrt {\frac{R_1}{h_1}}) \alpha_0 \right) - \frac{\pi}{4} \log \left( \frac{h_1}{h_0} \right)
+            \label{eq:neutral-line}
+        \end{equation}
+        \begin{equation}
+            \alpha_n = \sqrt {\frac{h_1}{R_1}} \tan\left( \frac{1}{2} \left[ \arctan \sqrt {\frac{h_0}{h_1} - 1}  + \sqrt {\frac{h_1}{R_1}} \frac{\pi}{4} \log \frac{h_1}{h_0}\right] \right)
+            \label{eq:neutral-line-fallback}
+        \end{equation}
+    \end{subequations}
+
+    As already mentioned the calculated roll torque derives from measured values by more than 20\% stated by \textcite{Weber1973}.
+    Therefore the plugin also calculates the roll torque using the approach by \textcite{Weber1960}.
+    The general equation used to calculate the roll torque is~\eqref{eq:torque-general} utilising~\eqref{eq:lever-arm-sims} for calculation of the lever arm coefficient,
+    published by \textcite{SimsWright1962} which is valid till $\frac{R}{h_1} \leq 25$.
+
+    \begin{subequations}
+        \begin{equation}
+            M_{roll} = F_{roll} L_d m
+            \label{eq:torque-general}
+        \end{equation}
+        \begin{equation}
+            m = 0.78 + 0.017 \frac{R_1}{h_1} - 0.163 \sqrt {\frac{R_1}{h_1}}
+            \label{eq:lever-arm-sims}
         \end{equation}
     \end{subequations}
 
@@ -85,10 +110,9 @@
 
     The plugin can be loaded under the name \texttt{pyroll\_sims\_power\_and\_labour}.
 
-    An implementation of the \lstinline{roll_force} and \lstinline{roll_tourque} hook on \lstinline{RollPass} and \lstinline{Roll} is provided,
-    calculating the roll force and torque using the equivalent rectangle approach.
-
-    Several additional hooks on \lstinline{RollPass} are defined, which are used in spread calculation, as listed in \autoref{tab:hookspecs}.
+    An implementation of the \lstinline{roll_force} and \lstinline{roll_torque} hook on \lstinline{RollPass} and \lstinline{RollPass.Roll} is provided,
+    calculating the roll force and torque using~\eqref{eq:sims-torque} and~\eqref{eq:sims-force}.
+    Several additional hooks on \lstinline{RollPass} are defined, which are used in power and labour calculations, as listed in \autoref{tab:hookspecs}.
     Base implementations of them are provided, so it should work out of the box.
     For \lstinline{sims_force_function} and \lstinline{sims_torque_function} the equations~\ref{eq:sims-force-function} and~\ref{eq:sims-torque} are implemented.
     Provide your own hook implementations or set attributes on the \lstinline{RollPass} instances to alter the spreading behavior.
@@ -99,11 +123,15 @@
         \label{tab:hookspecs}
         \begin{tabular}{ll}
             \toprule
-            Hook name                                 & Meaning                                     \\
+            Hook name                                             & Meaning                                               \\
             \midrule
-            \texttt{equivalent\_height\_change}       & Equivalent height change $\Delta h$         \\
-            \texttt{equivalent\_reduction}            & Equivalent reduction $\epsilon$             \\
-            \texttt{equivalent\_neutral\_line\_angle} & Equivalent angle of neutral line $\alpha_0$ \\
+            \texttt{equivalent\_height\_change}                   & Height change $\Delta h$                              \\
+            \texttt{equivalent\_reduction}                        & Reduction $\epsilon$                                  \\
+            \texttt{equivalent\_entry\_angle}                     & Entry or bite angle  $\alpha_0$                         \\
+            \texttt{equivalent\_neutral\_line\_angle}             & Angle of neutral line $\alpha_n$                      \\
+            \texttt{equivalent\_height\_at\_neutral\_line\_angle} & Height at angle of neutral line $h_n$                 \\
+            \texttt{lever\_arm\_sims}                             & Lever arm $m$ for roll pass                           \\
+            \texttt{roll\_torque\_general}                        & Roll torque $M_{roll}$ from~\eqref{eq:torque-general} \\
             \bottomrule
         \end{tabular}
     \end{table}
