@@ -13,6 +13,13 @@ documentation = "https://pyroll-project.github.io/modules/pyroll-sims-power-and-
 packages = [
     { include = "pyroll/sims_power_and_labour" }
 ]
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Manufacturing",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.11"
