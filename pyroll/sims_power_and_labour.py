@@ -3,7 +3,7 @@ import numpy as np
 import scipy.optimize as opt
 from pyroll.core import RollPass, Hook
 
-VERSION = "2.0.0"
+VERSION = "2.0"
 
 log = logging.getLogger(__name__)
 
