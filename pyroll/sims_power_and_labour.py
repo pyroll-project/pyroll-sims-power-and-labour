@@ -3,7 +3,7 @@ import numpy as np
 import scipy.optimize as opt
 from pyroll.core import RollPass, Hook
 
-VERSION = "2.0"
+VERSION = "2.0.1"
 
 log = logging.getLogger(__name__)
 
@@ -13,32 +13,20 @@ RollPass.inverse_forming_efficiency = Hook[float]()
 RollPass.roll_torque_loss_function = Hook[float]()
 """Loss function defined by R.B Sims for the roll torque for the roll pass."""
 
-RollPass.equivalent_entry_angle = Hook[float]()
-"""Entry angle of the equivalent flat pass into the roll pass."""
-
-RollPass.Roll.neutral_angle = Hook[float]()
-"""Angle of the neutral point at the roll surface according to R.B. Sims."""
-
 RollPass.Roll.lever_arm = Hook[float]()
 """Lever arm of the roll according to R.B. Sims."""
-
-
-@RollPass.equivalent_entry_angle
-def equivalent_entry_angle(self: RollPass):
-    entry_angle = np.arcsin(self.roll.contact_length / self.roll.min_radius)
-    log.info(f"Calculated an entry angle of: {np.rad2deg(entry_angle):.2f}")
-    return entry_angle
 
 
 @RollPass.Roll.neutral_angle
 def neutral_angle(self: RollPass.Roll):
     rp = self.roll_pass
+
     def sims_full_neutral_line_angle_function(neutral_line_angle: float):
         return (2 * np.sqrt(self.flattened_radius / rp.out_profile.equivalent_height) * np.arctan(
             np.sqrt(self.flattened_radius / rp.out_profile.equivalent_height)) * neutral_line_angle - np.sqrt(
             self.flattened_radius / rp.out_profile.equivalent_height) * np.arctan(
             np.sqrt(
-                self.flattened_radius / rp.out_profile.equivalent_height)) * rp.equivalent_entry_angle) - np.pi / 4 * np.log(
+                self.flattened_radius / rp.out_profile.equivalent_height)) * rp.entry_angle) - np.pi / 4 * np.log(
             rp.in_profile.equivalent_height / rp.out_profile.equivalent_height)
 
     def sims_simplified_neutral_line_angle():
@@ -49,18 +37,14 @@ def neutral_angle(self: RollPass.Roll):
             rp.out_profile.equivalent_height / rp.in_profile.equivalent_height)
         ))
 
-
-    neutral_line_angle_from_full_function = opt.root(sims_full_neutral_line_angle_function,
-                                                     self.contact_length / 2)
+    neutral_line_angle_from_full_function = opt.root(sims_full_neutral_line_angle_function, -self.contact_length / 2)
 
     if neutral_line_angle_from_full_function.success is True:
         neutral_line_angle = neutral_line_angle_from_full_function.x[0]
-        log.info(f"Calculated a neutral line angle of {np.rad2deg(neutral_line_angle):.2f} using Sims original model")
     else:
         neutral_line_angle = sims_simplified_neutral_line_angle()
         log.warning(
             "Calculation of neutral line angle using Sims original model failed due to" + neutral_line_angle_from_full_function.message)
-        log.info(f"Calculated a neutral line angle of {np.rad2deg(neutral_line_angle):.2f} using Sims simplified model")
 
     return neutral_line_angle
 
@@ -100,7 +84,7 @@ def lever_arm(self: RollPass.Roll):
 
 @RollPass.roll_torque_loss_function
 def roll_torque_loss_function(self: RollPass):
-    return self.equivalent_entry_angle / 2 - self.roll.neutral_angle
+    return self.entry_angle / 2 - self.roll.neutral_angle
 
 
 @RollPass.Roll.roll_torque
