@@ -1,24 +1,24 @@
 import logging
 import numpy as np
 import scipy.optimize as opt
-from pyroll.core import RollPass, Hook
+from pyroll.core import BaseRollPass, Hook
 
-VERSION = "2.0.1"
+VERSION = "3.0.0"
 
 log = logging.getLogger(__name__)
 
-RollPass.inverse_forming_efficiency = Hook[float]()
+BaseRollPass.inverse_forming_efficiency = Hook[float]()
 """Inverse forming efficiency of the roll pass."""
 
-RollPass.roll_torque_loss_function = Hook[float]()
+BaseRollPass.roll_torque_loss_function = Hook[float]()
 """Loss function defined by R.B Sims for the roll torque for the roll pass."""
 
-RollPass.Roll.lever_arm = Hook[float]()
+BaseRollPass.Roll.lever_arm = Hook[float]()
 """Lever arm of the roll according to R.B. Sims."""
 
 
-@RollPass.Roll.neutral_angle
-def neutral_angle(self: RollPass.Roll):
+@BaseRollPass.Roll.neutral_angle
+def neutral_angle(self: BaseRollPass.Roll):
     rp = self.roll_pass
 
     def sims_full_neutral_line_angle_function(neutral_line_angle: float):
@@ -49,8 +49,8 @@ def neutral_angle(self: RollPass.Roll):
     return neutral_line_angle
 
 
-@RollPass.inverse_forming_efficiency
-def inverse_forming_efficiency(self: RollPass):
+@BaseRollPass.inverse_forming_efficiency
+def inverse_forming_efficiency(self: BaseRollPass):
     height_at_neutral_angle = self.out_profile.equivalent_height + self.roll.flattened_radius * self.roll.neutral_angle ** 2
     eq_drought = self.in_profile.equivalent_height - self.out_profile.equivalent_height
 
@@ -63,8 +63,8 @@ def inverse_forming_efficiency(self: RollPass):
         1 / (1 - eq_drought))
 
 
-@RollPass.roll_force
-def roll_force(self: RollPass):
+@BaseRollPass.roll_force
+def roll_force(self: BaseRollPass):
     eq_drought = self.in_profile.equivalent_height - self.out_profile.equivalent_height
     mean_flow_stress = (self.in_profile.flow_stress + 2 * self.out_profile.flow_stress) / 3
     mean_width = (self.in_profile.equivalent_width + 2 * self.out_profile.equivalent_width) / 3
@@ -75,20 +75,20 @@ def roll_force(self: RollPass):
     return - roll_force_per_width * mean_width
 
 
-@RollPass.Roll.lever_arm
-def lever_arm(self: RollPass.Roll):
+@BaseRollPass.Roll.lever_arm
+def lever_arm(self: BaseRollPass.Roll):
     rp = self.roll_pass
     return 0.78 + 0.017 * self.flattened_radius / rp.out_profile.equivalent_height - 0.163 * np.sqrt(
         self.flattened_radius / rp.out_profile.equivalent_height)
 
 
-@RollPass.roll_torque_loss_function
-def roll_torque_loss_function(self: RollPass):
+@BaseRollPass.roll_torque_loss_function
+def roll_torque_loss_function(self: BaseRollPass):
     return self.entry_angle / 2 - self.roll.neutral_angle
 
 
-@RollPass.Roll.roll_torque
-def roll_torque(self: RollPass.Roll):
+@BaseRollPass.Roll.roll_torque
+def roll_torque(self: BaseRollPass.Roll):
     rp = self.roll_pass
     mean_flow_stress = (rp.in_profile.flow_stress + 2 * rp.out_profile.flow_stress) / 3
     mean_width = (rp.in_profile.equivalent_width + 2 * rp.out_profile.equivalent_width) / 3

@@ -2,17 +2,17 @@ import logging
 import webbrowser
 from pathlib import Path
 
-from pyroll.core import Profile, PassSequence, RollPass, Roll, CircularOvalGroove, Transport, RoundGroove
+from pyroll.core import Profile, Roll, ThreeRollPass, Transport, RoundGroove, CircularOvalGroove, PassSequence
 
 
-def test_solve(tmp_path: Path, caplog):
+def test_solve3(tmp_path: Path, caplog):
     caplog.set_level(logging.INFO, logger="pyroll")
 
     import pyroll.hitchcock_roll_flattening
     import pyroll.sims_power_and_labour
 
     in_profile = Profile.round(
-        diameter=30e-3,
+        diameter=55e-3,
         temperature=1200 + 273.15,
         strain=0,
         material=["C45", "steel"],
@@ -22,39 +22,41 @@ def test_solve(tmp_path: Path, caplog):
     )
 
     sequence = PassSequence([
-        RollPass(
+        ThreeRollPass(
             label="Oval I",
             roll=Roll(
                 groove=CircularOvalGroove(
                     depth=8e-3,
                     r1=6e-3,
-                    r2=40e-3
+                    r2=40e-3,
+                    pad_angle=30
                 ),
                 nominal_radius=160e-3,
                 rotational_frequency=1,
                 poissons_ratio=0.3,
                 elastic_modulus=2.1e11
             ),
-            gap=2e-3
+            gap=2e-3,
         ),
         Transport(
             label="I => II",
             duration=1
         ),
-        RollPass(
+        ThreeRollPass(
             label="Round II",
             roll=Roll(
                 groove=RoundGroove(
-                    r1=1e-3,
-                    r2=12.5e-3,
-                    depth=11.5e-3
+                    r1=3e-3,
+                    r2=25e-3,
+                    depth=11e-3,
+                    pad_angle=30
                 ),
                 nominal_radius=160e-3,
                 rotational_frequency=1,
                 poissons_ratio=0.3,
                 elastic_modulus=2.1e11
             ),
-            gap=2e-3
+            gap=2e-3,
         ),
     ])
 
