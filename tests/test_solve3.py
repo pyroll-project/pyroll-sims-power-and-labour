@@ -9,7 +9,7 @@ def test_solve3(tmp_path: Path, caplog):
     caplog.set_level(logging.INFO, logger="pyroll")
 
     import pyroll.hitchcock_roll_flattening
-    import pyroll.sims_power_and_labour
+    import pyroll.sims_force_torque
 
     in_profile = Profile.round(
         diameter=55e-3,
