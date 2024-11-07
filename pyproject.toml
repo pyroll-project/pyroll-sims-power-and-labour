@@ -1,5 +1,5 @@
 [project]
-name = "pyroll-sims-power-and-labour"
+name = "pyroll-sims-force-torque"
 description = "Plugin for PyRolL providing the power and labour calculation after R. B. Sims."
 authors = [
     { name = "Christoph Renzing", email = "christoph.renzing@imf.tu-freiberg.de" }
